@@ -7,10 +7,11 @@ from threading import Thread
 
 ########################################################################################## Constants
 
-# Format of file: 1=1\n2=0\n3=0 (meaning switch 1 on, switch 2 and 3 off)
+# Format of file: 1=on\n2=off\n3=off (meaning switch 1 on, switch 2 and 3 off)
 switch_values_file = "switch_values.dat"
 
 # Pin definitions
+switch_options = ['on', 'off']
 switches = [1, 2, 3]
 on_pins = [9, 1, 7]
 off_pins = [11, 0, 8]
@@ -27,9 +28,9 @@ def queue_pulse_pin(pin):
     pulse_queue.put(pin, block=False)
 
 def set_switch(switch_num, value):
-    if value == '1':
+    if value == 'on':
         queue_pulse_pin(on_pins[int(switch_num)-1])
-    elif value == '0':
+    elif value == 'off':
         queue_pulse_pin(off_pins[int(switch_num)-1])
 
 def read_switch_data():
@@ -67,20 +68,19 @@ def set_switches_from_file():
     for (switch_num, switch_value) in switch_dict.items():
         set_switch(switch_num, switch_value)
 
-
 ############################################################################################# Classes
-
-class ListController(Resource):
-    def get(self):
-        return read_switch_data()
 
 class AllController(Resource):
     def put(self, switch_value):
-        if switch_value in ['1', '0']:
+        if switch_value in switch_options:
             set_all(switch_value)
             return read_switch_data(), 201
         else:
-            return {'error': 'Switch value must be 1 or 0'}, 400
+            return {'error': 'Switch value must be on or off'}, 400
+
+class SwitchList(Resource):
+    def get(self):
+        return read_switch_data()
 
 class SwitchController(Resource):
     def get(self, switch_num):
@@ -95,8 +95,8 @@ class SwitchController(Resource):
         if int(switch_num) not in switches:
             valid_switches = ','.join([str(i) for i in switches])
             return {'error': 'Invalid switch number - must be one of these: '+valid_switches}, 400
-        elif switch_value not in ['1', '0']:
-            return {'error': 'Invalid switch value - must be 1 or 0'}, 400
+        elif switch_value not in switch_options:
+            return {'error': 'Invalid switch value - must be on or off'}, 400
         else:
             set_and_save_switch(switch_num, switch_value)
             return {switch_num: switch_value}, 201
@@ -112,9 +112,13 @@ class SwitchController(Resource):
 # Setup RESTful API
 app = Flask(__name__)
 api = Api(app)
-api.add_resource(ListController, '/')
 api.add_resource(AllController, '/all/<string:switch_value>')
+api.add_resource(SwitchList, '/switch/list')
 api.add_resource(SwitchController, '/switch/<string:switch_num>')
+
+@app.route('/')
+def main_page():
+    return '<html><body><h1>RPi Home Automation</h1></body></html>'
 
 ###################################################################################### Worker thread
 pulse_queue = Queue()
