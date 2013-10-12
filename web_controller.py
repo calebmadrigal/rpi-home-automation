@@ -10,9 +10,12 @@ from threading import Thread
 # Format of file: 1=on\n2=off\n3=off (meaning switch 1 on, switch 2 and 3 off)
 switch_values_file = "switch_values.dat"
 
+# Index page
+index_page_file = "index.html"
+
 # Pin definitions
 switch_options = ['on', 'off']
-switches = [1, 2, 3]
+switches = ['1', '2', '3']
 on_pins = [9, 1, 7]
 off_pins = [11, 0, 8]
 
@@ -28,10 +31,11 @@ def queue_pulse_pin(pin):
     pulse_queue.put(pin, block=False)
 
 def set_switch(switch_num, value):
+    switch_index = switches.index(switch_num)
     if value == 'on':
-        queue_pulse_pin(on_pins[int(switch_num)-1])
+        queue_pulse_pin(on_pins[switch_index])
     elif value == 'off':
-        queue_pulse_pin(off_pins[int(switch_num)-1])
+        queue_pulse_pin(off_pins[switch_index])
 
 def read_switch_data():
     with open(switch_values_file, "r") as f:
@@ -84,7 +88,7 @@ class SwitchList(Resource):
 
 class SwitchController(Resource):
     def get(self, switch_num):
-        if int(switch_num) in switches:
+        if switch_num in switches:
             return {switch_num: read_switch_value(switch_num)}
         else:
             return {'error': 'Invalid switch number'}, 400
@@ -92,8 +96,8 @@ class SwitchController(Resource):
     def put(self, switch_num):
         switch_value = request.form['value']
 
-        if int(switch_num) not in switches:
-            valid_switches = ','.join([str(i) for i in switches])
+        if switch_num not in switches:
+            valid_switches = ','.join(switches)
             return {'error': 'Invalid switch number - must be one of these: '+valid_switches}, 400
         elif switch_value not in switch_options:
             return {'error': 'Invalid switch value - must be on or off'}, 400
@@ -118,7 +122,8 @@ api.add_resource(SwitchController, '/switch/<string:switch_num>')
 
 @app.route('/')
 def main_page():
-    return '<html><body><h1>RPi Home Automation</h1></body></html>'
+    with open(index_page_file, "r") as page:
+        return page.read()
 
 ###################################################################################### Worker thread
 pulse_queue = Queue()
