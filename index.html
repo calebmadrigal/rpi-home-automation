@@ -12,11 +12,56 @@
 }
 </style>
 <script type="text/javascript">
+
+function change_switch(switch_name, switch_value) {
+    $.ajax({
+        url: '/switch/' + switch_name,
+        type: 'PUT',
+        data: "value="+switch_value,
+        success: function(data) {
+            //alert("Switch " + switch_name + " was set to " + switch_value);
+        }
+    });
+}
+
+function set_switch_ui_value(switch_ui_id, on_or_off) {
+    alert("Setting ui for "+switch_ui_id+" to "+on_or_off);
+    $(switch_ui_id).val(on_or_off);
+//    $(switch_ui_id+" option").filter(function() {
+//        return $(this).text() == on_or_off; 
+//    }).prop('selected', true);
+}
+
+function refresh_switches() {
+    $.get("/switch/list", function(data) {
+        for (var key in data) {
+            set_switch_ui_value("#switch"+key, data[key]);
+        }
+    });
+}
+
 $(function() {
     $("#switch1").bind("change", function(event, ui) {
-        alert("Switch1 changed");
+        var new_value = $(this).attr('value');
+        change_switch('1', new_value);
     });
-});    
+    $("#switch2").bind("change", function(event, ui) {
+        var new_value = $(this).attr('value');
+        change_switch('2', new_value);
+    });
+    $("#switch3").bind("change", function(event, ui) {
+        var new_value = $(this).attr('value');
+        change_switch('3', new_value);
+    });
+
+    $("#refresh_button").bind("click", function(event, ui) {
+        refresh_switches();
+    });
+
+    refresh_switches();
+});
+
+
 </script>
 </head>
 <body>
@@ -24,7 +69,7 @@ $(function() {
 <div data-role="page">
     <div data-role="header" data-position="fixed">
         <h2>RPi Home Controller</h2>
-        <a href="#" data-role="button" data-icon="refresh" class="ui-btn-right" data-iconpos="notext">Refresh</a>
+        <a href="#" id="refresh_button" data-role="button" data-icon="refresh" class="ui-btn-right" data-iconpos="notext">Refresh</a>
     </div>
 
     <div data-role="content">
