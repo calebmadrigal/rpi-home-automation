@@ -24,19 +24,35 @@ function change_switch(switch_name, switch_value) {
     });
 }
 
+function change_all(on_or_off) {
+    $.ajax({
+        url: '/all/' + on_or_off,
+        type: 'PUT',
+        success: function(data) {
+            refresh_switch_ui(data);
+            //alert("Switch " + switch_name + " was set to " + switch_value);
+        }
+    });
+}
+
 function set_switch_ui_value(switch_ui_id, on_or_off) {
-    alert("Setting ui for "+switch_ui_id+" to "+on_or_off);
     $(switch_ui_id).val(on_or_off);
-//    $(switch_ui_id+" option").filter(function() {
-//        return $(this).text() == on_or_off; 
-//    }).prop('selected', true);
+    $(switch_ui_id).slider("refresh");
+}
+
+function refresh_switch_ui(switch_data) {
+    for (var key in switch_data) {
+        set_switch_ui_value("#switch"+key, switch_data[key]);
+    }
 }
 
 function refresh_switches() {
-    $.get("/switch/list", function(data) {
-        for (var key in data) {
-            set_switch_ui_value("#switch"+key, data[key]);
+    $.mobile.showPageLoadingMsg();
+    $.get("/switch/list", function(switch_data) {
+        for (var key in switch_data) {
+            set_switch_ui_value("#switch"+key, switch_data[key]);
         }
+        $.mobile.hidePageLoadingMsg()
     });
 }
 
@@ -54,10 +70,6 @@ $(function() {
         change_switch('3', new_value);
     });
 
-    $("#refresh_button").bind("click", function(event, ui) {
-        refresh_switches();
-    });
-
     refresh_switches();
 });
 
@@ -69,30 +81,34 @@ $(function() {
 <div data-role="page">
     <div data-role="header" data-position="fixed">
         <h2>RPi Home Controller</h2>
-        <a href="#" id="refresh_button" data-role="button" data-icon="refresh" class="ui-btn-right" data-iconpos="notext">Refresh</a>
+        <a href="#" rel="external" onclick="refresh_switches(); return false" id="refresh_button" data-role="button" data-icon="refresh" class="ui-btn-right" data-iconpos="notext">Refresh</a>
     </div>
 
     <div data-role="content">
         <div data-role="fieldcontain">
             <label for="switch1">Switch 1</label>
             <select name="switch1" id="switch1" data-role="slider">
-            <option value="on">On</option>
             <option value="off">Off</option>
+            <option value="on">On</option>
             </select>
         </div>
         <div data-role="fieldcontain">
             <label for="switch2">Switch 2</label>
             <select name="switch2" id="switch2" data-role="slider">
-            <option value="on">On</option>
             <option value="off">Off</option>
+            <option value="on">On</option>
             </select>
         </div>
         <div data-role="fieldcontain">
             <label for="switch3">Switch 3</label>
             <select name="switch3" id="switch3" data-role="slider">
-            <option value="on">On</option>
             <option value="off">Off</option>
+            <option value="on">On</option>
             </select>
+        </div>
+        <div data-role="fieldcontain">
+            <button data-inline="true" onclick="change_all('off'); return false;">All Off</button>
+            <button data-inline="true" data-theme="b" onclick="change_all('on'); return false;">All On</button>
         </div>
     </div>
 
