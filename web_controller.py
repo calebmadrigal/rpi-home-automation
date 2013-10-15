@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
 from time import sleep
@@ -8,10 +10,10 @@ import RPi.GPIO as GPIO
 ########################################################################################## Constants
 
 # Format of file: 1=on\n2=off\n3=off (meaning switch 1 on, switch 2 and 3 off)
-switch_values_file = "switch_values.dat"
+switch_values_file = "/home/pi/rpi-home-automation/switch_values.dat"
 
 # Index page
-index_page_file = "index.html"
+index_page_file = "/home/pi/rpi-home-automation/index.html"
 
 # Pin definitions
 switch_options = ['on', 'off']
