@@ -3,7 +3,7 @@ from flask.ext.restful import Resource, Api
 from time import sleep
 from Queue import Queue
 from threading import Thread
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 ########################################################################################## Constants
 
@@ -23,9 +23,9 @@ off_pins = [11, 0, 8]
 
 def pulse_pin(pin):
     print "Pulsing pin", pin
-    #GPIO.output(pin, True)
-    sleep(1)
-    #GPIO.output(pin, False)
+    GPIO.output(pin, True)
+    sleep(1.5)
+    GPIO.output(pin, False)
 
 def queue_pulse_pin(pin):
     pulse_queue.put(pin, block=False)
@@ -109,9 +109,9 @@ class SwitchController(Resource):
 ####################################################################################### RESTful API
 
 # Setup pins for output mode
-#GPIO.setmode(GPIO.BCM)
-#for pin in on_pins + off_pins:
-#    GPIO.setup(pin, GPIO.OUT)
+GPIO.setmode(GPIO.BCM)
+for pin in on_pins + off_pins:
+    GPIO.setup(pin, GPIO.OUT)
 
 # Setup RESTful API
 app = Flask(__name__)
