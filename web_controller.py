@@ -145,5 +145,5 @@ if __name__ == '__main__':
     # Read data file and set switches accordingly.
     set_switches_from_file()
 
-    app.run(host='0.0.0.0', port=9003, debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)
 
