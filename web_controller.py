@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#
+# Raspberry Pi Control system for home automation.
 
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
