@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
-GPIO_PIN = 8
+GPIO_PIN = 17
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(GPIO_PIN, GPIO.OUT)
