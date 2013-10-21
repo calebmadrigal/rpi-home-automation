@@ -5,6 +5,7 @@ import sys
 input_pin = 7
 output_pin = 17
 alarm_time_on = 5 #seconds
+bounce_time = alarm_time_on * 1000 # milliseconds
 triggered = False
 
 def input_callback(channel):
@@ -23,7 +24,7 @@ GPIO.setwarnings(False)
 GPIO.setup(input_pin, GPIO.IN)
 GPIO.setup(output_pin, GPIO.OUT)
 
-GPIO.add_event_detect(input_pin, GPIO.RISING, callback=input_callback, bouncetime=200)
+GPIO.add_event_detect(input_pin, GPIO.RISING, callback=input_callback, bouncetime=bounce_time)
 GPIO.output(output_pin, False)
 
 print "Input pin:", input_pin
