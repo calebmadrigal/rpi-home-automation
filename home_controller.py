@@ -40,6 +40,7 @@ door_sensor_triggered = False
 def door_sensor_callback(channel):
     global door_sensor_triggered
     door_sensor_triggered = True
+    print "Door sensor triggered"
 
 def pulse_pin(pin, pulse_time_in_secs=1.5):
     print "Pulsing pin", pin
@@ -158,6 +159,7 @@ def main_page():
 #################################################################################### Trigger watcher
 def sound_alarm():
     # For now, just turn everything on... later, we will really sound the alarm :)
+    print "ALERT!!! ALERT!!! ALERT!!!"
     set_all('on')
 
 def automated_controller():
@@ -185,20 +187,24 @@ def pulser_worker():
 
 if __name__ == '__main__':
     # Read data file and set switches accordingly.
+    print "Setting initial switch values"
     set_switches_from_file()
 
     # Actuator worker thread
+    print "Spawning actuator thread"
     actuator_thread = Thread(target=pulser_worker)
     actuator_thread.daemon = True
     actuator_thread.start()
     pulse_queue.join()
 
     # Automation thread
+    print "Spawning automation thread"
     automation_thread = Thread(target=automated_controller)
     automation_thread.daemon = True
     automation_thread.start()
-    automation_thread.join()
 
     # Run web app and web api
+    print "Running web server"
     app.run(host='0.0.0.0', port=80, debug=True)
 
+    automation_thread.join()
