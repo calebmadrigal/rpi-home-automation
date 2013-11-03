@@ -31,7 +31,7 @@ off_pins = [11, 0, 8]
 # Door sensor data
 door_sensor_pin = 24
 alarm_time_on = 5 #seconds
-door_sensor_bounce_time = alarm_time_on * 1000 #milliseconds -> seconds
+door_sensor_bounce_time = 34 * 60 * 1000 # 34 min
 door_sensor_triggered = False
 
 
