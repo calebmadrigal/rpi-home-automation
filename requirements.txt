@@ -2,12 +2,10 @@ Flask==0.10.1
 Flask-RESTful==0.2.5
 Jinja2==2.7.1
 MarkupSafe==0.18
-RPi.GPIO==0.5.3a
+#RPi.GPIO==0.5.3a
 Werkzeug==0.9.4
 argparse==1.2.1
 distribute==0.6.27
 itsdangerous==0.23
-numpy==1.6.2
-pygame==1.9.1release
 smbus==1.1
 wsgiref==0.1.2
