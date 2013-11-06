@@ -2,6 +2,9 @@
 #
 # Raspberry Pi Control system for home automation.
 
+__author__ = "Caleb Madrigal"
+__version__ = "0.0.1"
+
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
 from time import sleep
