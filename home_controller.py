@@ -180,7 +180,7 @@ def sound_alarm():
 
 def automated_controller():
     global door_sensor_triggered
-    global mode
+    global automation_mode
 
     while True:
         if door_sensor_triggered:
@@ -189,8 +189,8 @@ def automated_controller():
             print "Automation mode:", automation_mode
             if automation_mode == 'on':
                 sound_alarm()
-        else:
-            sleep(0.1)
+
+        sleep(1)
 
 
 ###################################################################################### Worker thread
