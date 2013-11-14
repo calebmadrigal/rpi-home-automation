@@ -18,7 +18,7 @@ switch_values_file = "/home/pi/rpi-home-automation/switch_values.dat"
 index_page_file = "/home/pi/rpi-home-automation/index.html"
 
 # Automation mode
-automation_mode = 'on'
+automation_mode = 'off'
 
 # Switch data
 switch_options = ['on', 'off']
@@ -99,11 +99,13 @@ def set_switches_from_file():
 
 class AutomationModeController(Resource):
     def put(self, automation_mode_value):
+        print "Setting automation mode =", automation_mode_value
+        global automation_mode
         automation_mode = automation_mode_value
         return {'automation': automation_mode}, 201
     def get(self):
+        global automation_mode
         return {'automation': automation_mode}, 200
-
 
 class AllController(Resource):
     def put(self, switch_value):
@@ -181,6 +183,7 @@ def automated_controller():
         if door_sensor_triggered:
             door_sensor_triggered = False
 
+            print "Automation mode:", automation_mode
             if automation_mode == 'on':
                 sound_alarm()
         else:
