@@ -2,9 +2,6 @@
 #
 # Raspberry Pi Control system for home automation.
 
-__author__ = "Caleb Madrigal"
-__version__ = "0.0.1"
-
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
 from time import sleep
@@ -21,7 +18,7 @@ switch_values_file = "/home/pi/rpi-home-automation/switch_values.dat"
 index_page_file = "/home/pi/rpi-home-automation/index.html"
 
 # Automation mode
-automation_on = True
+automation_mode = 'on'
 
 # Switch data
 switch_options = ['on', 'off']
@@ -100,6 +97,14 @@ def set_switches_from_file():
 
 ############################################################################################# Classes
 
+class AutomationModeController(Resource):
+    def put(self, automation_mode_value):
+        automation_mode = automation_mode_value
+        return {'automation': automation_mode}, 201
+    def get(self):
+        return {'automation': automation_mode}, 200
+
+
 class AllController(Resource):
     def put(self, switch_value):
         if switch_value in switch_options:
@@ -152,6 +157,7 @@ api = Api(app)
 api.add_resource(AllController, '/all/<string:switch_value>')
 api.add_resource(SwitchList, '/switch/list')
 api.add_resource(SwitchController, '/switch/<string:switch_num>')
+api.add_resource(AutomationModeController, '/automation/<string:automation_mode_value>')
 
 @app.route('/')
 def main_page():
@@ -164,6 +170,8 @@ def sound_alarm():
     # For now, just turn everything on... later, we will really sound the alarm :)
     print "ALERT!!! ALERT!!! ALERT!!!"
     set_all('on')
+    sleep(30)
+    set_all('off')
 
 def automated_controller():
     global door_sensor_triggered
@@ -173,7 +181,7 @@ def automated_controller():
         if door_sensor_triggered:
             door_sensor_triggered = False
 
-            if automation_on:
+            if automation_mode == 'on':
                 sound_alarm()
         else:
             sleep(0.1)
