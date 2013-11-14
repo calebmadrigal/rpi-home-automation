@@ -103,6 +103,8 @@ class AutomationModeController(Resource):
         global automation_mode
         automation_mode = automation_mode_value
         return {'automation': automation_mode}, 201
+
+class AutomationModeReaderController(Resource):
     def get(self):
         global automation_mode
         return {'automation': automation_mode}, 200
@@ -160,6 +162,7 @@ api.add_resource(AllController, '/all/<string:switch_value>')
 api.add_resource(SwitchList, '/switch/list')
 api.add_resource(SwitchController, '/switch/<string:switch_num>')
 api.add_resource(AutomationModeController, '/automation/<string:automation_mode_value>')
+api.add_resource(AutomationModeReaderController, '/automation/mode')
 
 @app.route('/')
 def main_page():

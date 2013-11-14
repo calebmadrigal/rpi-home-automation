@@ -58,8 +58,8 @@ function refresh_switches() {
 
 function get_automation_mode() {
     $.mobile.showPageLoadingMsg();
-    $.get("/automation", function(automation_mode) {
-        $("#automation_mode").val(automation_mode);
+    $.get("/automation/mode", function(automation_mode) {
+        $("#automation_mode").val(automation_mode["automation"]);
         $("#automation_mode").slider("refresh");
         $.mobile.hidePageLoadingMsg()
     });
@@ -95,6 +95,7 @@ $(function() {
     });
 
     refresh_switches();
+    get_automation_mode();
 });
 
 
