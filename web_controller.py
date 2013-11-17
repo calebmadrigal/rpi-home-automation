@@ -54,7 +54,7 @@ class AutomationModeController(Resource):
         automation_mode_value = request.form['value'].lower()
         if automation_mode_value in ['on', 'off']:
             state = set_automation_mode(automation_mode_value)
-            return state, 201
+            return state, 204
         else:
             return {'error': 'Automation mode must be on or off'}, 400
 
@@ -63,7 +63,7 @@ class AllController(Resource):
         switch_value = switch_value.lower()
         if switch_value in ['on', 'off']:
             state = set_all_switches(switch_value)
-            return state, 201
+            return state, 204
         else:
             return {'error': 'Switch value must be on or off'}, 400
 
@@ -89,7 +89,7 @@ class SwitchController(Resource):
             return {'error': 'Invalid switch value - must be on or off'}, 400
         else:
             state = set_switch(switch_id, switch_value)
-            return state, 201
+            return state, 204
 
 ######################################################################################## RESTful API
 
