@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 #
-# Raspberry Pi Control system for home automation.
+# Raspberry Pi Home Security System - switch_worker
 
 __author__ = "Caleb Madrigal"
-__version__ = "0.0.2"
 
 import zmq
+import time
 import logging
 import RPi.GPIO as GPIO
-from time import sleep
 import settings
+
+LOG_FILE = "/var/log/homeautomation_switch.log"
 
 ########################################################################################## Actuators
 
 def pulse_pin(pin, pulse_time_in_secs=1.5):
-    print "Pulsing pin", pin
     GPIO.output(pin, True)
-    sleep(pulse_time_in_secs)
+    time.sleep(pulse_time_in_secs)
     GPIO.output(pin, False)
 
 def setup_switch_gpio_pins():
@@ -24,19 +24,29 @@ def setup_switch_gpio_pins():
     GPIO.setmode(GPIO.BCM)
 
     # Output pins
-    for pin in on_pins + off_pins:
+    for pin in settings.on_pins + settings.off_pins:
         GPIO.setup(pin, GPIO.OUT)
 
 def run():
     context = zmq.Context()
     task_queue = context.socket(zmq.PULL)
-    task_queue.bind("tcp://127.0.0.1:"+settings.switch_worker_port)
+    task_queue.bind(settings.switch_worker_conn_str)
+    logging.info("switch_worker started")
 
     while True:
-        pin = task_queue.recv()
-        pulse_pin(pin, settings.switch_pulse_time_in_secs)
+        msg = task_queue.recv_json() # Blocking call
+        if 'pin' in msg:
+            pin = msg['pin']
+            pulse_pin(pin, settings.switch_pulse_time_in_secs)
+            print "Pulsing pin", pin # TODO: Remove print line
+            logging.info("Pulsing pin: {0}".format(pin))
+        else:
+            logging.log("Invalid message received: {0}".format(msg)
 
 if __name__ == "__main__":
+    logging.basicConfig(filename=LOG_FILE, format='%(asctime)s - %(levelname)s - %(message)s',
+                        datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
+    logging.info("Off pins: {0}, On pins: {1}".format(settings.off_pins, settings.on_pins))
     setup_switch_gpio_pins()
     run()
 

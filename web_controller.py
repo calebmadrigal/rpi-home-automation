@@ -1,79 +1,104 @@
 #!/usr/bin/env python
 #
-# Raspberry Pi Control system for home automation.
+# Raspberry Pi Home Security System - web_controller
 
 __author__ = "Caleb Madrigal"
-__version__ = "0.0.2"
 
 import zmq
-import RPi.GPIO as GPIO
 import settings
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
-from time import sleep
+
+LOG_FILE = "/var/log/homeautomation_web.log"
 
 ############################################################################ Interaction with master
 
-def send_recv_message(message):
+def send_recv_message(json_msg):
+    #return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' }
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect("tcp://127.0.0.1:" + str(settings.web_controller_port))
-    socket.send(message)
-    return socket.recv()
-
-def get_switch(switch_id):
-    return send_recv_message("get:"+switch_id)
+    socket.connect(settings.web_controller_conn_str)
+    socket.send_json(json_msg)
+    return socket.recv_json()
+}
 
 def set_switch(switch_id, switch_value):
-    send_recv_message("set:" + switch_id + "=" + switch_value)
-
-def get_all_switches():
-    return send_recv_message("get:all")
+    state = send_recv_message({'command':'set_switch', 'switch_id':switch_id, 'value':switch_value})
+    return state
 
 def set_all_switches(switch_value):
-    send_recv_message("set:all=" + switch_value)
+    state = send_recv_message({'command':'set_all', 'value':switch_value})
+    return state
+
+def set_automation_mode(automation_mode_value):
+    state = send_recv_message({'command':'set_automation_mode', 'value':automation_mode_value})
+    return state
+
+def get_state():
+    state = send_recv_message({'command':'get_state'})
+    return state
 
 ############################################################################################ Classes
 
+class StateController(Resource):
+    def get(self):
+        state = get_state()
+        return state
+
+class AutomationModeController(Resource):
+    def get(self):
+        state = get_state()
+        return {'automation_mode': state['automation_mode']}
+
+    def put(self):
+        automation_mode_value = request.form['value'].lower()
+        if automation_mode_value in ['on', 'off']:
+            state = set_automation_mode(automation_mode_value)
+            return state, 201
+        else:
+            return {'error': 'Automation mode must be on or off'}, 400
+
 class AllController(Resource):
     def put(self, switch_value):
-        if switch_value in switch_options:
-            set_all(switch_value)
-            return read_switch_data(), 201
+        switch_value = switch_value.lower()
+        if switch_value in ['on', 'off']:
+            state = set_all_switches(switch_value)
+            return state, 201
         else:
             return {'error': 'Switch value must be on or off'}, 400
 
-class SwitchList(Resource):
-    def get(self):
-        return read_switch_data()
-
 class SwitchController(Resource):
-    def get(self, switch_num):
-        if switch_num in switches:
-            return {switch_num: read_switch_value(switch_num)}
+    def get(self, switch_id):
+        switch_id = switch_id.lower()
+        state = get_state()
+        if switch_id == 'list' or switch_id == 'all':
+            return state['switches']
+        if switch_id in state['switches']:
+            return {switch_id: state['switches'][switch_id]}
         else:
-            return {'error': 'Invalid switch number'}, 400
+            return {'error': 'Invalid switch name'}, 400
 
-    def put(self, switch_num):
-        switch_value = request.form['value']
+    def put(self, switch_id):
+        switch_id = switch_id.lower()
+        switch_value = request.form['value'].lower()
 
-        if switch_num not in switches:
-            valid_switches = ','.join(switches)
+        if switch_id not in settings.switches:
+            valid_switches = ','.join(settings.switches)
             return {'error': 'Invalid switch number - must be one of these: '+valid_switches}, 400
-        elif switch_value not in switch_options:
+        elif switch_value not in ['on', 'off']:
             return {'error': 'Invalid switch value - must be on or off'}, 400
         else:
-            set_and_save_switch(switch_num, switch_value)
-            return {switch_num: switch_value}, 201
+            state = set_switch(switch_id, switch_value)
+            return state, 201
 
 ######################################################################################## RESTful API
 
 # Setup RESTful API
 app = Flask(__name__)
 api = Api(app)
+api.add_resource(StateController, '/state/')
 api.add_resource(AllController, '/all/<string:switch_value>')
-api.add_resource(SwitchList, '/switch/list')
-api.add_resource(SwitchController, '/switch/<string:switch_num>')
+api.add_resource(SwitchController, '/switch/<string:switch_id>')
 
 @app.route('/')
 def main_page():
@@ -81,7 +106,6 @@ def main_page():
         return page.read()
 
 if __name__ == '__main__':
-    # Run web app and web api
     print "Running web server"
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=80, debug=False)
 
