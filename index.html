@@ -19,7 +19,6 @@ function change_switch(switch_name, switch_value) {
         type: 'PUT',
         data: "value="+switch_value,
         success: function(data) {
-            //alert("Switch " + switch_name + " was set to " + switch_value);
         }
     });
 }
@@ -30,7 +29,6 @@ function change_all(on_or_off) {
         type: 'PUT',
         success: function(data) {
             refresh_switch_ui(data);
-            //alert("Switch " + switch_name + " was set to " + switch_value);
         }
     });
 }
@@ -56,7 +54,42 @@ function refresh_switches() {
     });
 }
 
+function get_automation_mode() {
+    $.mobile.showPageLoadingMsg();
+    $.get("/automation_mode/", function(automation_mode) {
+        $("#automation_mode").val(automation_mode["automation"]);
+        $("#automation_mode").slider("refresh");
+        $.mobile.hidePageLoadingMsg()
+    });
+}
+
+function change_switch(switch_name, switch_value) {
+    $.ajax({
+        url: '/switch/' + switch_name,
+        type: 'PUT',
+        data: "value="+switch_value,
+        success: function(data) {
+        }
+    });
+}
+
+function set_automation_mode(automation_mode_value) {
+    $.ajax({
+        url: '/automation_mode/',
+        type: 'PUT',
+        data: "value="+automation_mode_value,
+        success: function(data) {
+            $("#automation_mode").val(on_or_off);
+            $("#automation_mode").slider("refresh");
+        }
+    });
+}
+
 $(function() {
+    $("#automation_mode").bind("change", function(event, ui) {
+        var new_value = $(this).attr('value');
+        set_automation_mode(new_value);
+    });
     $("#switch1").bind("change", function(event, ui) {
         var new_value = $(this).attr('value');
         change_switch('1', new_value);
@@ -71,6 +104,7 @@ $(function() {
     });
 
     refresh_switches();
+    get_automation_mode();
 });
 
 
@@ -85,6 +119,13 @@ $(function() {
     </div>
 
     <div data-role="content">
+        <div data-role="fieldcontain">
+            <label for="automation_mode">Alarm Mode</label>
+            <select name="automation_mode" id="automation_mode" data-role="slider">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+            </select>
+        </div>
         <div data-role="fieldcontain">
             <label for="switch1">Switch 1</label>
             <select name="switch1" id="switch1" data-role="slider">

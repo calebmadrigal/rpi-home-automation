@@ -14,27 +14,30 @@ LOG_FILE = "/var/log/homeautomation_web.log"
 ############################################################################ Interaction with master
 
 def send_recv_message(json_msg):
-    #return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' }
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
-    socket.connect(settings.web_controller_conn_str)
-    socket.send_json(json_msg)
-    return socket.recv_json()
-}
+    return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' } }
+    #context = zmq.Context()
+    #socket = context.socket(zmq.REQ)
+    #socket.connect(settings.web_controller_conn_str)
+    #socket.send_json(json_msg)
+    #return socket.recv_json()
 
 def set_switch(switch_id, switch_value):
+    print "set switch {0} to {1}".format(switch_id, switch_value)
     state = send_recv_message({'command':'set_switch', 'switch_id':switch_id, 'value':switch_value})
     return state
 
 def set_all_switches(switch_value):
+    print "set all to {0}".format(switch_value)
     state = send_recv_message({'command':'set_all', 'value':switch_value})
     return state
 
 def set_automation_mode(automation_mode_value):
+    print "set automation mode to {0}".format(automation_mode_value)
     state = send_recv_message({'command':'set_automation_mode', 'value':automation_mode_value})
     return state
 
 def get_state():
+    print "get state"
     state = send_recv_message({'command':'get_state'})
     return state
 
@@ -97,6 +100,7 @@ class SwitchController(Resource):
 app = Flask(__name__)
 api = Api(app)
 api.add_resource(StateController, '/state/')
+api.add_resource(AutomationModeController, '/automation_mode/')
 api.add_resource(AllController, '/all/<string:switch_value>')
 api.add_resource(SwitchController, '/switch/<string:switch_id>')
 
