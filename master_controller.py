@@ -53,9 +53,11 @@ def set_switch(switch_id, switch_value):
 #################################################################################### Alarm functions
 def sound_alarm(state):
     print "ALERT!!! ALERT!!! ALERT!!!"
-    set_all('on')
+    for switch_id in settings.switches:
+        set_switch(switch_id, 'on')
     time.sleep(20)
-    set_all('off')
+    for switch_id in settings.switches:
+        set_switch(switch_id, 'off')
 
 ################################################################################ master_control_loop
 def master_control_loop():
@@ -90,11 +92,11 @@ def master_control_loop():
         elif (sensor_socket in poll_result) and (poll_result[sensor_socket] == zmq.POLLIN):
             msg = sensor_socket.recv_json()
             if msg['command'] == 'triggered':
-                # TODO: use alarm_is_sounding
+                # TODO: use alarm_is_sounding instead
                 sound_alarm(state)
 
         else:
-            sleep(0.1)
+            time.sleep(0.1)
 
 def handle_web_req(web_socket, state):
     msg = web_socket.recv_json()
@@ -102,8 +104,8 @@ def handle_web_req(web_socket, state):
     if command == 'set_switch':
         switch_id = msg['switch_id']
         switch_value = msg['value']
-        set_switch(switch_id, value)
-        state['switches'][switch_id] = value
+        set_switch(switch_id, switch_value)
+        state['switches'][switch_id] = switch_value
         save_state(state)
     elif command == 'set_all':
         switch_value = msg['value']

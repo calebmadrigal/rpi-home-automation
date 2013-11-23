@@ -14,12 +14,12 @@ LOG_FILE = "/var/log/homeautomation_web.log"
 ############################################################################ Interaction with master
 
 def send_recv_message(json_msg):
-    return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' } }
-    #context = zmq.Context()
-    #socket = context.socket(zmq.REQ)
-    #socket.connect(settings.web_controller_conn_str)
-    #socket.send_json(json_msg)
-    #return socket.recv_json()
+    # return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' } }
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect(settings.web_controller_conn_str)
+    socket.send_json(json_msg)
+    return socket.recv_json()
 
 def set_switch(switch_id, switch_value):
     print "set switch {0} to {1}".format(switch_id, switch_value)
