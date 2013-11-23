@@ -41,6 +41,8 @@ def get_state():
     state = send_recv_message({'command':'get_state'})
     return state
 
+# TODO: add alarm:on, alarm:off
+
 ############################################################################################ Classes
 
 class StateController(Resource):

@@ -18,7 +18,7 @@ def door_sensor_callback(channel):
     context = zmq.Context()
     socket = context.socket(zmq.PUSH)
     socket.connect(settings.sensor_watcher_conn_str)
-    socket.send_json({'door':'triggered'})
+    socket.send_json({'command':'triggered'})
     logging.info("door was opened")
 
 def run():

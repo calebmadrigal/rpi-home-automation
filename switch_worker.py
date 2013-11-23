@@ -35,13 +35,10 @@ def run():
 
     while True:
         msg = task_queue.recv_json() # Blocking call
-        if 'pin' in msg:
-            pin = msg['pin']
-            pulse_pin(pin, settings.switch_pulse_time_in_secs)
-            print "Pulsing pin", pin # TODO: Remove print line
-            logging.info("Pulsing pin: {0}".format(pin))
-        else:
-            logging.log("Invalid message received: {0}".format(msg)
+        pin = msg['pin']
+        pulse_pin(pin, settings.switch_pulse_time_in_secs)
+        print "Pulsing pin", pin # TODO: Remove print line
+        logging.info("Pulsing pin: {0}".format(pin))
 
 if __name__ == "__main__":
     logging.basicConfig(filename=LOG_FILE, format='%(asctime)s - %(levelname)s - %(message)s',
