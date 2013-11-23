@@ -7,7 +7,6 @@ __author__ = "Caleb Madrigal"
 import zmq
 import time
 import logging
-import RPi.GPIO as GPIO
 import settings
 
 # TODO: Daemonize process?
@@ -22,14 +21,9 @@ def door_sensor_callback(channel):
     logging.info("door was opened")
 
 def run():
-    # Setup modes for GPIO pins
-    GPIO.setmode(GPIO.BCM)
-
     # Input pin
-    GPIO.setup(settings.door_sensor_pin, GPIO.IN)
-    GPIO.add_event_detect(settings.door_sensor_pin, GPIO.RISING, \
-                          callback=door_sensor_callback, \
-                          bouncetime=settings.door_sensor_bounce_time)
+    print "Setting pin {0} to watch for rising inputs".format(settings.door_sensor_pin)
+
     logging.info("sensor_watcher started; sensor_pin:{0}, bouncetime:{1}".format(
             settings.door_sensor_pin, settings.door_sensor_bounce_time))
 
