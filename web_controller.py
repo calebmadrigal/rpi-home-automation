@@ -95,7 +95,7 @@ class SwitchController(Resource):
             state = set_switch(switch_id, switch_value)
             return state, 200
 
-######################################################################################## RESTful API
+####################################################################################### RESTful API
 
 # Setup RESTful API
 app = Flask(__name__)

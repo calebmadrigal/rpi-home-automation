@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+#
+# Raspberry Pi Home Security System - main
+
+__author__ = "Caleb Madrigal"
+
 import sys
 import multiprocessing
 import master_controller

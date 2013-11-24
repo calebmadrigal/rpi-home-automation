@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #
-# Raspberry Pi Home Security System - switch_worker
+# Raspberry Pi Home Security System - GPIO mock - for testing when not on a Pi
 
 __author__ = "Caleb Madrigal"
 
 BCM = 1
-OUT = 2
-IN = 3
-RISING = 4
+OUT = 1
+IN = 1
+RISING = 1
 
 
 def output(pin, value):

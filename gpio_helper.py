@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Raspberry Pi Home Security System - switch_worker
+# Raspberry Pi Home Security System - gpio_helper
 
 __author__ = "Caleb Madrigal"
 

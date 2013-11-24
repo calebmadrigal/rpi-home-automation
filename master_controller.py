@@ -12,7 +12,7 @@ import settings
 import gpio_helper
 
 
-######################################################################################### state file
+######################################################################################### State file
 
 
 def build_init_state():
@@ -37,7 +37,7 @@ def read_state():
         pass
     return state
 
-############################################################################ switch_worker interface
+############################################################################# gpio_helper interface
 
 
 def set_switch(switch_id, switch_value):
@@ -50,15 +50,13 @@ def set_switch(switch_id, switch_value):
         else:
             pin = settings.off_pins[switch_index]
 
-    # TODO: Offload determining which pin to pulse to switch_worker?
-
     # Send pulse request to switch_worker
     context = zmq.Context()
     switch_socket = context.socket(zmq.PUSH)
     switch_socket.connect(settings.switch_worker_conn_str)
     switch_socket.send_json({'pin':pin})
 
-#################################################################################### Alarm functions
+################################################################################### Alarm functions
 
 
 def sound_alarm(state):
@@ -68,6 +66,8 @@ def sound_alarm(state):
     time.sleep(20)
     for switch_id in settings.switches:
         set_switch(switch_id, 'off')
+
+########################################################################## Web controller interface
 
 
 def handle_web_req(web_socket, state):
@@ -94,6 +94,8 @@ def handle_web_req(web_socket, state):
 
     return state
 
+############################################################################################### Run
+
 
 def run():
     # Read state from file (or create initial state file)
@@ -109,7 +111,6 @@ def run():
     web_socket = context.socket(zmq.REP)
     web_socket.bind(settings.web_controller_conn_str)
 
-    # TODO: Make sure poll() is non-blocking so that we can control the alarm sounding length
     poll = zmq.Poller()
     poll.register(web_socket, zmq.POLLIN)
 
