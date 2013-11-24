@@ -9,17 +9,23 @@ import time
 import json
 import zmq
 import settings
+import gpio_helper
+
 
 ######################################################################################### state file
+
+
 def build_init_state():
     state = {'automation_mode': 'off', 'switches': {}}
     for switch_id in settings.switches:
         state['switches'][switch_id] = 'off'
     return state
 
+
 def save_state(state):
     with open(settings.state_file, 'w') as f:
         f.write(json.dumps(state))
+
 
 def read_state():
     state = build_init_state()
@@ -32,6 +38,8 @@ def read_state():
     return state
 
 ############################################################################ switch_worker interface
+
+
 def set_switch(switch_id, switch_value):
     # Determine pin number to pulse
     pin = 0
@@ -40,7 +48,7 @@ def set_switch(switch_id, switch_value):
         if switch_value == 'on':
             pin = settings.on_pins[switch_index]
         else:
-            pin = settings.on_pins[switch_index]
+            pin = settings.off_pins[switch_index]
 
     # TODO: Offload determining which pin to pulse to switch_worker?
 
@@ -51,6 +59,8 @@ def set_switch(switch_id, switch_value):
     switch_socket.send_json({'pin':pin})
 
 #################################################################################### Alarm functions
+
+
 def sound_alarm(state):
     print "ALERT!!! ALERT!!! ALERT!!!"
     for switch_id in settings.switches:
@@ -59,44 +69,6 @@ def sound_alarm(state):
     for switch_id in settings.switches:
         set_switch(switch_id, 'off')
 
-################################################################################ master_control_loop
-def master_control_loop():
-    # Read state from file (or create initial state file)
-    state = read_state()
-
-    # Set switches the the appropriate values (needed if the power went out)
-    for switch_id in state['switches'].keys():
-        switch_value = state['switches'][switch_id]
-        set_switch(switch_id, switch_value)
-
-    # Setup web and sensor sockets
-    context = zmq.Context()
-    web_socket = context.socket(zmq.REP)
-    web_socket.bind(settings.web_controller_conn_str)
-    sensor_socket = context.socket(zmq.PULL)
-    sensor_socket.bind(settings.sensor_watcher_conn_str)
-
-    # TODO: Make sure poll() is non-blocking so that we can control the alarm sounding length
-    poll = zmq.Poller()
-    poll.register(web_socket, zmq.POLLIN)
-    poll.register(sensor_socket, zmq.POLLIN)
-
-    # Variables to control how long we sound the alarm
-    alarm_is_sounding = False
-    alarm_start_time = ""
-
-    while True:
-        poll_result = dict(poll.poll())
-        if (web_socket in poll_result) and (poll_result[web_socket] == zmq.POLLIN):
-            state = handle_web_req(web_socket)
-        elif (sensor_socket in poll_result) and (poll_result[sensor_socket] == zmq.POLLIN):
-            msg = sensor_socket.recv_json()
-            if msg['command'] == 'triggered':
-                # TODO: use alarm_is_sounding instead
-                sound_alarm(state)
-
-        else:
-            time.sleep(0.1)
 
 def handle_web_req(web_socket, state):
     msg = web_socket.recv_json()
@@ -120,12 +92,48 @@ def handle_web_req(web_socket, state):
     # No matter what, return the state (including if the command is 'get_state')
     web_socket.send_json(state)
 
+    return state
+
+
+def run():
+    # Read state from file (or create initial state file)
+    state = read_state()
+
+    # Set switches the the appropriate values (needed if the power went out)
+    for switch_id in state['switches'].keys():
+        switch_value = state['switches'][switch_id]
+        set_switch(switch_id, switch_value)
+
+    # Setup web and sensor sockets
+    context = zmq.Context()
+    web_socket = context.socket(zmq.REP)
+    web_socket.bind(settings.web_controller_conn_str)
+
+    # TODO: Make sure poll() is non-blocking so that we can control the alarm sounding length
+    poll = zmq.Poller()
+    poll.register(web_socket, zmq.POLLIN)
+
+    # Variables to control how long we sound the alarm; note that I made these variables
+    # into a dict so that triggered could be set in the alarm_callback closure.
+    alarm_data = dict(triggered=False, alarm_sounding=False, alarm_start_time="")
+
+    def alarm_callback(channel):
+        alarm_data['triggered'] = True
+
+    gpio_helper.setup_sensor_callback(alarm_callback)
+
+    # Main control loop
+    while True:
+        poll_result = dict(poll.poll(timeout=1000))  # Wait up to 1 second
+
+        if (web_socket in poll_result) and (poll_result[web_socket] == zmq.POLLIN):
+            state = handle_web_req(web_socket, state)
+
+        if alarm_data['triggered']:
+            alarm_data['triggered'] = False
+            alarm_data['alarm_sounding'] = True
+            print "Alarm triggered!"
+
+
 if __name__ == '__main__':
-    # TODO: Make supervisord start all of the processes?
-
-    # Start switch_worker process
-    # Start sensor_watcher process
-    # Start web_controller process
-
-    master_control_loop()
-
+    run()

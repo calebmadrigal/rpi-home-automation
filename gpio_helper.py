@@ -7,24 +7,45 @@ __author__ = "Caleb Madrigal"
 import zmq
 import time
 import logging
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    import gpio_mock as GPIO
+
 import settings
 
 LOG_FILE = "/var/log/homeautomation_switch.log"
 
-########################################################################################## Actuators
 
 def pulse_pin(pin, pulse_time_in_secs=1.5):
-    print "Setting pin {0} to {1}".format(pin, 'True')
+    GPIO.output(pin, True)
     time.sleep(pulse_time_in_secs)
-    print "Setting pin {0} to {1}".format(pin, 'False')
+    GPIO.output(pin, False)
 
 
 def setup_switch_gpio_pins():
+    # Setup modes for GPIO pins
+    GPIO.setmode(GPIO.BCM)
+
     # Output pins
     for pin in settings.on_pins + settings.off_pins:
-        print "Setting pin {0} to GPIO.OUT".format(pin)
+        GPIO.setup(pin, GPIO.OUT)
+
+
+def setup_sensor_callback(sensor_callback):
+    # Setup modes for GPIO pins
+    GPIO.setmode(GPIO.BCM)
+
+    # Input pin
+    GPIO.setup(settings.door_sensor_pin, GPIO.IN)
+    GPIO.add_event_detect(settings.door_sensor_pin, GPIO.RISING,
+                          callback=sensor_callback,
+                          bouncetime=settings.door_sensor_bounce_time)
+
 
 def run():
+    setup_switch_gpio_pins()
+
     context = zmq.Context()
     task_queue = context.socket(zmq.PULL)
     task_queue.bind(settings.switch_worker_conn_str)
@@ -38,9 +59,4 @@ def run():
         logging.info("Pulsing pin: {0}".format(pin))
 
 if __name__ == "__main__":
-    logging.basicConfig(filename=LOG_FILE, format='%(asctime)s - %(levelname)s - %(message)s',
-                        datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
-    logging.info("Off pins: {0}, On pins: {1}".format(settings.off_pins, settings.on_pins))
-    setup_switch_gpio_pins()
     run()
-

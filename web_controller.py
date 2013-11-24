@@ -14,7 +14,6 @@ LOG_FILE = "/var/log/homeautomation_web.log"
 ############################################################################ Interaction with master
 
 def send_recv_message(json_msg):
-    # return { 'automation_mode': 'on', 'switches': { '1': 'off', '2': 'off', '3': 'off' } }
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(settings.web_controller_conn_str)
@@ -59,7 +58,7 @@ class AutomationModeController(Resource):
         automation_mode_value = request.form['value'].lower()
         if automation_mode_value in ['on', 'off']:
             state = set_automation_mode(automation_mode_value)
-            return state, 204
+            return state, 200
         else:
             return {'error': 'Automation mode must be on or off'}, 400
 
@@ -68,7 +67,7 @@ class AllController(Resource):
         switch_value = switch_value.lower()
         if switch_value in ['on', 'off']:
             state = set_all_switches(switch_value)
-            return state, 204
+            return state, 200
         else:
             return {'error': 'Switch value must be on or off'}, 400
 
@@ -94,7 +93,7 @@ class SwitchController(Resource):
             return {'error': 'Invalid switch value - must be on or off'}, 400
         else:
             state = set_switch(switch_id, switch_value)
-            return state, 204
+            return state, 200
 
 ######################################################################################## RESTful API
 
@@ -111,7 +110,9 @@ def main_page():
     with open(settings.index_page_file, "r") as page:
         return page.read()
 
-if __name__ == '__main__':
+def run():
     print "Running web server"
-    app.run(host='0.0.0.0', port=80, debug=False)
+    app.run(host='0.0.0.0', port=8007, debug=False)
 
+if __name__ == '__main__':
+    run()

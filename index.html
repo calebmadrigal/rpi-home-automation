@@ -40,7 +40,7 @@ function set_switch_ui_value(switch_ui_id, on_or_off) {
 
 function refresh_switch_ui(switch_data) {
     for (var key in switch_data) {
-        set_switch_ui_value("#switch"+key, switch_data[key]);
+        set_switch_ui_value("#switch"+key, switch_data['switches'][key]);
     }
 }
 
@@ -56,8 +56,8 @@ function refresh_switches() {
 
 function get_automation_mode() {
     $.mobile.showPageLoadingMsg();
-    $.get("/automation_mode/", function(automation_mode) {
-        $("#automation_mode").val(automation_mode["automation"]);
+    $.get("/automation_mode/", function(response) {
+        $("#automation_mode").val(response["automation_mode"]);
         $("#automation_mode").slider("refresh");
         $.mobile.hidePageLoadingMsg()
     });
