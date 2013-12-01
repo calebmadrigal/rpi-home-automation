@@ -3,16 +3,12 @@
 # Raspberry Pi Home Security System - main
 
 __author__ = "Caleb Madrigal"
+__version__ = "0.0.3"
 
-import sys
 import multiprocessing
 import master_controller
 import web_controller
-
-if len(sys.argv) > 1 and sys.argv[1] == 'mock':
-    import mock_gpio_helper as gpio_helper
-else:
-    import gpio_helper
+import gpio_helper
 
 
 def main():

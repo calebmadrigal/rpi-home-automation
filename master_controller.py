@@ -3,14 +3,16 @@
 # Raspberry Pi Home Security System - master_controller
 
 __author__ = "Caleb Madrigal"
-__version__ = "0.0.2"
 
 import time
 import json
 import zmq
+import logging
 import settings
 import gpio_helper
+from common import setup_logger
 
+logger = setup_logger("master", settings.master_log_file, logging.DEBUG)
 
 ######################################################################################### State file
 
@@ -41,6 +43,7 @@ def read_state():
 
 
 def set_switch(switch_id, switch_value):
+    logger.debug("Setting switch {0} to {1}".format(switch_id, switch_value))
     # Determine pin number to pulse
     pin = 0
     switch_index = settings.switches.index(switch_id)
@@ -60,7 +63,6 @@ def set_switch(switch_id, switch_value):
 
 
 def sound_alarm(state):
-    print "ALERT!!! ALERT!!! ALERT!!!"
     for switch_id in settings.switches:
         set_switch(switch_id, 'on')
     time.sleep(20)
@@ -72,6 +74,8 @@ def sound_alarm(state):
 
 def handle_web_req(web_socket, state):
     msg = web_socket.recv_json()
+    logger.debug("Request from web: {0}".format(msg))
+
     command = msg['command']
     if command == 'set_switch':
         switch_id = msg['switch_id']
@@ -81,12 +85,14 @@ def handle_web_req(web_socket, state):
         save_state(state)
     elif command == 'set_all':
         switch_value = msg['value']
+        logger.debug("Setting all to {0}".format(switch_value))
         for switch_id in state['switches'].keys():
             set_switch(switch_id, switch_value)
             state['switches'][switch_id] = switch_value
         save_state(state)
     elif command == 'set_automation_mode':
         state['automation_mode'] = msg['value']
+        logger.debug("Setting automation mode to {0}".format(msg['value']))
         save_state(state)
 
     # No matter what, return the state (including if the command is 'get_state')
@@ -98,6 +104,8 @@ def handle_web_req(web_socket, state):
 
 
 def run():
+    logger.info("Master started")
+
     # Read state from file (or create initial state file)
     state = read_state()
 
@@ -105,6 +113,7 @@ def run():
     for switch_id in state['switches'].keys():
         switch_value = state['switches'][switch_id]
         set_switch(switch_id, switch_value)
+        logging.info("Setting switch {0} to init value of {1}".format(switch_id, switch_value))
 
     # Setup web and sensor sockets
     context = zmq.Context()
@@ -131,10 +140,9 @@ def run():
             state = handle_web_req(web_socket, state)
 
         if alarm_data['triggered']:
+            logger.info("Alarm triggered")
             alarm_data['triggered'] = False
             alarm_data['alarm_sounding'] = True
-            print "Alarm triggered!"
-
 
 if __name__ == '__main__':
     run()

@@ -6,12 +6,15 @@ __author__ = "Caleb Madrigal"
 
 import zmq
 import settings
+import logging
+from common import setup_logger
 from flask import Flask, request
 from flask.ext.restful import Resource, Api
 
-LOG_FILE = "/var/log/homeautomation_web.log"
+logger = setup_logger("web", settings.web_log_file, logging.DEBUG)
 
 ############################################################################ Interaction with master
+
 
 def send_recv_message(json_msg):
     context = zmq.Context()
@@ -20,23 +23,27 @@ def send_recv_message(json_msg):
     socket.send_json(json_msg)
     return socket.recv_json()
 
+
 def set_switch(switch_id, switch_value):
-    print "set switch {0} to {1}".format(switch_id, switch_value)
+    logger.info("Request master set switch {0} to {1}".format(switch_id, switch_value))
     state = send_recv_message({'command':'set_switch', 'switch_id':switch_id, 'value':switch_value})
     return state
 
+
 def set_all_switches(switch_value):
-    print "set all to {0}".format(switch_value)
+    logger.info("Request master set all to {0}".format(switch_value))
     state = send_recv_message({'command':'set_all', 'value':switch_value})
     return state
 
+
 def set_automation_mode(automation_mode_value):
-    print "set automation mode to {0}".format(automation_mode_value)
+    logger.info("Request master set automation mode to {0}".format(automation_mode_value))
     state = send_recv_message({'command':'set_automation_mode', 'value':automation_mode_value})
     return state
 
+
 def get_state():
-    print "get state"
+    logger.debug("Get state")
     state = send_recv_message({'command':'get_state'})
     return state
 
@@ -44,10 +51,12 @@ def get_state():
 
 ############################################################################################ Classes
 
+
 class StateController(Resource):
     def get(self):
         state = get_state()
         return state
+
 
 class AutomationModeController(Resource):
     def get(self):
@@ -62,6 +71,7 @@ class AutomationModeController(Resource):
         else:
             return {'error': 'Automation mode must be on or off'}, 400
 
+
 class AllController(Resource):
     def put(self, switch_value):
         switch_value = switch_value.lower()
@@ -70,6 +80,7 @@ class AllController(Resource):
             return state, 200
         else:
             return {'error': 'Switch value must be on or off'}, 400
+
 
 class SwitchController(Resource):
     def get(self, switch_id):
@@ -110,9 +121,10 @@ def main_page():
     with open(settings.index_page_file, "r") as page:
         return page.read()
 
+
 def run():
-    print "Running web server"
-    app.run(host='0.0.0.0', port=8007, debug=False)
+    logger.info("Web controller started - serving on {0}:{1}".format(settings.hostname, settings.port))
+    app.run(host=settings.hostname, port=settings.port, debug=False)
 
 if __name__ == '__main__':
     run()
