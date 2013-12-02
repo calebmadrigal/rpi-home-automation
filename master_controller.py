@@ -8,6 +8,7 @@ import time
 import json
 import zmq
 import logging
+import datetime
 import settings
 import gpio_helper
 from common import setup_logger
@@ -100,6 +101,50 @@ def handle_web_req(web_socket, state):
 
     return state
 
+#################################################################################### Alarm handling
+
+
+class AlarmControl:
+    def __init__(self, state, alarm_duration):
+        self.state = state
+        self.alarm_duration = alarm_duration
+        self.alarm_sounding = False
+        self.alarm_start_time = ""
+
+    def start_alarm(self):
+        if self.alarm_sounding:
+            return
+
+        logger.info("Starting alarm")
+        self.alarm_sounding = True
+        self.alarm_start_time = datetime.datetime.now()
+        self.perform_alarm()
+
+    def stop_alarm(self):
+        logger.info("Stopping alarm")
+        self.alarm_sounding = False
+
+        # Turn all switches off
+        for switch_id in settings.switches:
+            set_switch(switch_id, 'off')
+            self.state['switches'][switch_id] = 'off'
+
+    def process(self):
+        if self.alarm_sounding:
+            logger.debug("Alarm still on")
+            now = datetime.datetime.now()
+            seconds_since_alarm = (now - self.alarm_start_time).seconds
+            if seconds_since_alarm > self.alarm_duration:
+                self.stop_alarm()
+
+    def perform_alarm(self):
+        logger.debug("Perform alarm!!!")
+
+        # Turn all switches on
+        for switch_id in settings.switches:
+            set_switch(switch_id, 'on')
+            self.state['switches'][switch_id] = 'on'
+
 ############################################################################################### Run
 
 
@@ -123,12 +168,10 @@ def run():
     poll = zmq.Poller()
     poll.register(web_socket, zmq.POLLIN)
 
-    # Variables to control how long we sound the alarm; note that I made these variables
-    # into a dict so that triggered could be set in the alarm_callback closure.
-    alarm_data = dict(triggered=False, alarm_sounding=False, alarm_start_time="")
+    alarm_control = AlarmControl(state, settings.alarm_duration)
 
-    def alarm_callback(channel):
-        alarm_data['triggered'] = True
+    def alarm_callback(channel_unused):
+        alarm_control.start_alarm()
 
     gpio_helper.setup_sensor_callback(alarm_callback)
 
@@ -136,13 +179,12 @@ def run():
     while True:
         poll_result = dict(poll.poll(timeout=1000))  # Wait up to 1 second
 
+        # Handle requests from web controller
         if (web_socket in poll_result) and (poll_result[web_socket] == zmq.POLLIN):
             state = handle_web_req(web_socket, state)
 
-        if alarm_data['triggered']:
-            logger.info("Alarm triggered")
-            alarm_data['triggered'] = False
-            alarm_data['alarm_sounding'] = True
+        # Do any necessary alarm-related work
+        alarm_control.process()
 
 if __name__ == '__main__':
     run()

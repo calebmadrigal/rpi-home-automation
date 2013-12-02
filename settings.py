@@ -24,7 +24,7 @@ door_sensor_pin = 24
 door_sensor_bounce_time = 34 * 60 * 1000 # 34 min
 
 # Alarm stuff
-alarm_time_on = 5 #seconds
+alarm_duration = 30 #seconds
 
 # 0MQ Connection stuff
 web_controller_conn_str = "tcp://127.0.0.1:30000"
