@@ -37,4 +37,6 @@ nosetests.xml
 
 # Project-specific
 state.json
+credentials.json
 .idea
+*.log

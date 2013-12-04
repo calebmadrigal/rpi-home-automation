@@ -9,6 +9,7 @@ import json
 import zmq
 import logging
 import datetime
+import smtplib
 import settings
 import gpio_helper
 from common import setup_logger
@@ -39,6 +40,12 @@ def read_state():
         # Go with default state
         pass
     return state
+
+def load_email_credentials():
+    credentials = {}
+    with open('credentials.json', 'r') as f:
+        credentials = json.loads(f.read())
+    return credentials
 
 ############################################################################# gpio_helper interface
 
@@ -105,9 +112,11 @@ def handle_web_req(web_socket, state):
 
 
 class AlarmControl:
-    def __init__(self, state, alarm_duration):
+    def __init__(self, state, alarm_duration, email_username, email_password):
         self.state = state
         self.alarm_duration = alarm_duration
+        self.email_username = email_username
+        self.email_password = email_password
         self.alarm_sounding = False
         self.alarm_start_time = ""
 
@@ -145,6 +154,26 @@ class AlarmControl:
             set_switch(switch_id, 'on')
             self.state['switches'][switch_id] = 'on'
 
+        # Send alert email
+        self.send_alert_email()
+
+    def send_alert_email(self):
+        email_from = 'alarmrobot@yahoo.com'
+        email_to  = 'trigger@ifttt.com'
+        subj='#alarmtriggered Alarm triggered'
+        date='12/3/2013'
+        message_text='The door was opened.'
+        msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % ( email_from, email_to, subj, date, message_text )
+
+        try:
+            server = smtplib.SMTP("smtp.mail.yahoo.com",587)
+            server.login(self.email_username, self.email_password)
+            server.sendmail(email_from, email_to, msg)
+            server.quit()
+            logger.debug("Successfully sent alart email")
+        except Exception, e:
+            logger.debug("failed to send alart email")
+
 ############################################################################################### Run
 
 
@@ -168,7 +197,11 @@ def run():
     poll = zmq.Poller()
     poll.register(web_socket, zmq.POLLIN)
 
-    alarm_control = AlarmControl(state, settings.alarm_duration)
+    credentials = load_email_credentials()
+    email_un = credentials['email_username']
+    email_pw = credentials['email_password']
+
+    alarm_control = AlarmControl(state, settings.alarm_duration, email_un, email_pw)
 
     def alarm_callback(channel_unused):
         alarm_control.start_alarm()
@@ -182,6 +215,7 @@ def run():
         # Handle requests from web controller
         if (web_socket in poll_result) and (poll_result[web_socket] == zmq.POLLIN):
             state = handle_web_req(web_socket, state)
+            alarm_callback(None)
 
         # Do any necessary alarm-related work
         alarm_control.process()
