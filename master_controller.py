@@ -215,7 +215,6 @@ def run():
         # Handle requests from web controller
         if (web_socket in poll_result) and (poll_result[web_socket] == zmq.POLLIN):
             state = handle_web_req(web_socket, state)
-            alarm_callback(None)
 
         # Do any necessary alarm-related work
         alarm_control.process()
