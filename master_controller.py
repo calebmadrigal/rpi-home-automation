@@ -97,6 +97,10 @@ def handle_web_req(web_socket, state):
         switch_value = msg['value']
         logger.debug("Setting all to {0}".format(switch_value))
         for switch_id in state['switches'].keys():
+            # Temporary way to prevent the set_all form affecting the siren (switch1)
+            if switch_id == 'switch1':
+                continue
+
             set_switch(switch_id, switch_value)
             state['switches'][switch_id] = switch_value
         save_state(state)
