@@ -10,6 +10,7 @@ import zmq
 import logging
 import datetime
 import smtplib
+from smtplib import SMTP_SSL
 import settings
 import gpio_helper
 from common import setup_logger
@@ -40,6 +41,7 @@ def read_state():
         # Go with default state
         pass
     return state
+
 
 def load_email_credentials():
     credentials = {}
@@ -112,11 +114,10 @@ def handle_web_req(web_socket, state):
 
 
 class AlarmControl:
-    def __init__(self, state, alarm_duration, email_username, email_password):
+    def __init__(self, state, alarm_duration, credentials):
         self.state = state
         self.alarm_duration = alarm_duration
-        self.email_username = email_username
-        self.email_password = email_password
+        self.credentials = credentials
         self.alarm_sounding = False
         self.alarm_start_time = ""
 
@@ -158,21 +159,21 @@ class AlarmControl:
         self.send_alert_email()
 
     def send_alert_email(self):
-        email_from = 'alarmrobot@yahoo.com'
-        email_to  = 'trigger@ifttt.com'
-        subj='#alarmtriggered Alarm triggered'
-        date='12/3/2013'
-        message_text='The door was opened.'
-        msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % ( email_from, email_to, subj, date, message_text )
+        subj = self.credentials["email_tag"] + ' Alarm triggered'
+        date = datetime.datetime.now().strftime("%m/%d/%Y")
+        message_text = 'The door was opened.'
+        msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % \
+              (self.credentials["email_username"], self.credentials["email_to"],
+               subj, date, message_text)
 
         try:
-            server = smtplib.SMTP("smtp.mail.yahoo.com",587)
-            server.login(self.email_username, self.email_password)
-            server.sendmail(email_from, email_to, msg)
+            server = SMTP_SSL('smtp.mail.yahoo.com', timeout=10)
+            server.login(self.credentials["email_username"], self.credentials["email_password"])
+            server.sendmail(self.credentials["email_username"], self.credentials["email_to"], msg)
             server.quit()
-            logger.debug("Successfully sent alart email")
+            logger.debug("Successfully sent alert email")
         except Exception, e:
-            logger.debug("failed to send alart email")
+            logger.debug("Failed to send alert email; " + e.message)
 
 ############################################################################################### Run
 
@@ -198,10 +199,7 @@ def run():
     poll.register(web_socket, zmq.POLLIN)
 
     credentials = load_email_credentials()
-    email_un = credentials['email_username']
-    email_pw = credentials['email_password']
-
-    alarm_control = AlarmControl(state, settings.alarm_duration, email_un, email_pw)
+    alarm_control = AlarmControl(state, settings.alarm_duration, credentials)
 
     def alarm_callback(channel_unused):
         alarm_control.start_alarm()
