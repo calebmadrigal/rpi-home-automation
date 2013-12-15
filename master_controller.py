@@ -45,7 +45,7 @@ def read_state():
 
 def load_email_credentials():
     credentials = {}
-    with open('credentials.json', 'r') as f:
+    with open(settings.credentials_file, 'r') as f:
         credentials = json.loads(f.read())
     return credentials
 
@@ -98,7 +98,7 @@ def handle_web_req(web_socket, state):
         logger.debug("Setting all to {0}".format(switch_value))
         for switch_id in state['switches'].keys():
             # Temporary way to prevent the set_all form affecting the siren (switch1)
-            if switch_id == 'switch1':
+            if switch_id == '1':
                 continue
 
             set_switch(switch_id, switch_value)
