@@ -206,7 +206,8 @@ def run():
     alarm_control = AlarmControl(state, settings.alarm_duration, credentials)
 
     def alarm_callback(channel_unused):
-        alarm_control.start_alarm()
+        if state['automation_mode'] == 'on':
+            alarm_control.start_alarm()
 
     gpio_helper.setup_sensor_callback(alarm_callback)
 
