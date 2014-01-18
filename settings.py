@@ -24,7 +24,7 @@ switch_pulse_time_in_secs = 1.5
 
 # Door sensor data
 door_sensor_pin = 24
-door_sensor_bounce_time = 34 * 60 * 1000 # 34 min
+door_sensor_bounce_time = 36 * 60 * 1000 # 36 min
 
 # Alarm stuff
 alarm_duration = 30 #seconds
